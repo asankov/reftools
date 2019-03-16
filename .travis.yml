@@ -1,34 +1,59 @@
 language: go
 
-sudo: false
-
 notifications:
     email:
         on_success: change
         on_failure: always
 
-go:
-    - 1.10.x
-    - 1.11.x
-    - tip
+git:
+    depth: 1
 
-os:
-    - linux
-    - osx
+env:
+    - GO111MODULE=on
 
 before_install:
-    - GO_FILES=$(go list ./... | grep -v /vendor/ | grep -v /test-fixtures/)
-    - go get -v golang.org/x/lint/golint
-    - go get -v honnef.co/go/tools/cmd/megacheck
-    - go get -v github.com/mdempsky/unconvert
-    - go get -v github.com/mdempsky/maligned
+   - GO_PKGS=$(go list ./... | grep -v /test-fixtures/)
+   - echo $GO_PKGS
+   - go install -v golang.org/x/lint/golint
+   - go install -v honnef.co/go/tools/cmd/megacheck
+   - go install -v github.com/mdempsky/unconvert
+   - go install -v github.com/mdempsky/maligned
 
 install: true
 
-script:
-    - golint -set_exit_status $GO_FILES
-    - megacheck $GO_FILES
-    - unconvert $GO_FILES
-    - maligned $GO_FILES
-    - go vet $GO_FILES
-    - go test -race -v $GO_FILES
+matrix:
+    allow_failures:
+        - go: tip
+    fast_finish: true
+    include:
+        - go: 1.10.x
+          script:
+            - golint -set_exit_status $GO_PKGS
+            - megacheck $GO_PKGS
+            - unconvert $GO_PKGS
+            - maligned $GO_PKGS
+            - go test -race -v $GO_PKGS
+        - go: 1.11.x
+          script:
+            - golint -set_exit_status $GO_PKGS
+            - megacheck $GO_PKGS
+            - unconvert $GO_PKGS
+            - maligned $GO_PKGS
+            - go test -race -v -mod=vendor $GO_PKGS
+            - go test -race -v $GO_PKGS
+        - go: 1.12.x
+          script:
+            - golint -set_exit_status $GO_PKGS
+            - megacheck $GO_PKGS
+            - unconvert $GO_PKGS
+            - maligned $GO_PKGS
+            - go test -race -v -mod=vendor $GO_PKGS
+            - go test -race -v $GO_PKGS
+        - go: tip
+          script:
+            - golint -set_exit_status $GO_PKGS
+            - megacheck $GO_PKGS
+            - unconvert $GO_PKGS
+            - maligned $GO_PKGS
+            - go test -race -v -mod=vendor $GO_PKGS
+            - go test -race -v $GO_PKGS
